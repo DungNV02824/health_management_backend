@@ -260,3 +260,33 @@ variable "enable_cdn" {
   type        = bool
   default     = true
 }
+
+# Cloud Scheduler Variables
+variable "scheduler_endpoint_url" {
+  description = "Full URL endpoint that Cloud Scheduler will invoke (e.g., https://your-service.run.app/api/v1/scheduler/hello-world)"
+  type        = string
+}
+
+variable "scheduler_cron_schedule" {
+  description = "Cron expression for the scheduler (e.g., '*/30 * * * *' for every 30 minutes)"
+  type        = string
+  default     = "*/30 * * * *"
+}
+
+variable "scheduler_time_zone" {
+  description = "Time zone for the scheduler (e.g., 'UTC', 'America/New_York')"
+  type        = string
+  default     = "UTC"
+}
+
+variable "scheduler_use_oidc_auth" {
+  description = "Whether to use OIDC authentication for Cloud Scheduler (set to true if Cloud Run requires authentication)"
+  type        = bool
+  default     = false
+}
+
+variable "scheduler_paused" {
+  description = "Whether the scheduler job should be paused"
+  type        = bool
+  default     = false
+}

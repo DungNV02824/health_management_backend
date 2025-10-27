@@ -59,3 +59,13 @@ enable_custom_domain = true  # Set to true when ready to configure custom domain
 custom_domain        = "vhealth.io.net"
 api_subdomain        = "api"  # This will create api.vhealth.io.net
 enable_cdn           = true
+
+# Cloud Scheduler Configuration
+# Note: Update this URL after deploying your Cloud Run service
+# For prod with custom domain: https://api.vhealth.io.net/api/v1/scheduler/hello-world
+# For prod without custom domain: https://vhealth-backend-prod-HASH.asia-southeast1.run.app/api/v1/scheduler/hello-world
+scheduler_endpoint_url    = "https://api.vhealth.io.net/api/v1/scheduler/hello-world"
+scheduler_cron_schedule   = "*/30 * * * *"  # Every 30 minutes
+scheduler_time_zone       = "Asia/Ho_Chi_Minh"  # Vietnam time zone (UTC+7)
+scheduler_use_oidc_auth   = false  # Set to true if Cloud Run requires authentication
+scheduler_paused          = false  # Set to true to pause the scheduler
