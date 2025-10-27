@@ -244,13 +244,13 @@ variable "enable_custom_domain" {
 }
 
 variable "custom_domain" {
-  description = "Base custom domain (e.g., vhealth.io.net)"
+  description = "Base custom domain (e.g., vhealth.io.vn)"
   type        = string
   default     = ""
 }
 
 variable "api_subdomain" {
-  description = "API subdomain (e.g., 'api' for api.vhealth.io.net or 'dev.api' for dev.api.vhealth.io.net)"
+  description = "API subdomain (e.g., 'api' for api.vhealth.io.vn or 'dev.api' for dev.api.vhealth.io.vn)"
   type        = string
   default     = "api"
 }
