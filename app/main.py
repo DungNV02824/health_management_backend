@@ -10,7 +10,6 @@ from app.config import settings
 from app.db.database import database
 from app.api.user import router as user_router
 from app.api.auth import router as auth_router
-from app.api.scheduler import router as scheduler_router
 
 # Configure logging
 logging.basicConfig(
@@ -57,9 +56,6 @@ app.include_router(
 )
 app.include_router(
     auth_router, prefix=f"{settings.api_v1_prefix}/auth", tags=["authentication"]
-)
-app.include_router(
-    scheduler_router, prefix=f"{settings.api_v1_prefix}/scheduler", tags=["scheduler"]
 )
 
 
