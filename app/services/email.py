@@ -13,49 +13,12 @@ from app.config import settings
 # Email templates
 EMAIL_VERIFICATION_TEMPLATE = """
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Verify Your Email - Health Management</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-        .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .logo { font-size: 28px; font-weight: bold; color: #2563eb; }
-        .content { line-height: 1.6; color: #333; }
-        .button { display: inline-block; padding: 12px 30px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🏥 Health Management</div>
-        </div>
-        <div class="content">
-            <h2>Welcome, {{ first_name }}!</h2>
-            <p>Thank you for registering with Health Management. To complete your registration and secure your account, please verify your email address by clicking the button below:</p>
-            <a href="{{ verification_url }}" class="button">Verify Email Address</a>
-            <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
-            <p><a href="{{ verification_url }}">{{ verification_url }}</a></p>
-            <p><strong>This verification link will expire in {{ expiry_minutes }} minutes.</strong></p>
-            <p>If you didn't create an account with us, please ignore this email.</p>
-        </div>
-        <div class="footer">
-            <p>This is an automated email from Health Management. Please do not reply to this email.</p>
-        </div>
-    </div>
-</body>
-</html>
-"""
-
-PASSWORD_RESET_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Password Reset - HealthCare Pro</title>
+    <title>Xác thực Email - VHealth</title>
+    <link rel="icon" type="image/svg+xml" href="https://storage.googleapis.com/vhealth-dev-public/favicon.svg" />
     <style>
       /* Reset and base styles */
       * {
@@ -89,9 +52,23 @@ PASSWORD_RESET_TEMPLATE = """
 
       /* Header */
       .header {
-        background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+        background: linear-gradient(135deg, #00bba7 0%, #00bc7d 100%);
         padding: 32px 40px;
         text-align: center;
+      }
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .logo-image {
+        width: 40px;
+        height: 40px;
+        display: block;
       }
 
       .logo {
@@ -99,11 +76,11 @@ PASSWORD_RESET_TEMPLATE = """
         font-weight: 700;
         color: #ffffff;
         letter-spacing: -0.025em;
-        margin-bottom: 8px;
+        margin: 0;
       }
 
       .tagline {
-        color: #a7f3d0;
+        color: rgba(255, 255, 255, 0.9);
         font-size: 14px;
         font-weight: 500;
         letter-spacing: 0.025em;
@@ -118,7 +95,7 @@ PASSWORD_RESET_TEMPLATE = """
       .content h1 {
         font-size: 24px;
         font-weight: 700;
-        color: #1a1a1a;
+        color: #101828;
         margin-bottom: 24px;
         letter-spacing: -0.025em;
         line-height: 1.3;
@@ -133,7 +110,7 @@ PASSWORD_RESET_TEMPLATE = """
 
       .content p {
         font-size: 16px;
-        color: #4b5563;
+        color: #6a7282;
         margin-bottom: 20px;
         line-height: 1.7;
       }
@@ -147,7 +124,7 @@ PASSWORD_RESET_TEMPLATE = """
       .button {
         display: inline-block;
         padding: 16px 32px;
-        background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+        background: linear-gradient(135deg, #00bba7 0%, #00bc7d 100%);
         color: #ffffff;
         text-decoration: none;
         border-radius: 8px;
@@ -155,63 +132,65 @@ PASSWORD_RESET_TEMPLATE = """
         font-size: 16px;
         letter-spacing: 0.025em;
         transition: all 0.2s ease;
-        box-shadow: 0 4px 6px -1px rgba(15, 118, 110, 0.3);
+        box-shadow: 0 4px 6px -1px rgba(0, 187, 167, 0.3);
       }
 
       .button:hover {
         transform: translateY(-1px);
-        box-shadow: 0 6px 8px -1px rgba(15, 118, 110, 0.4);
+        box-shadow: 0 6px 8px -1px rgba(0, 187, 167, 0.4);
       }
 
-      /* Link fallback */
-      .link-fallback {
-        background-color: #f0fdfa;
-        border: 1px solid #a7f3d0;
+      /* Unified info box styles */
+      .info-box {
+        background-color: #f8f9fa;
+        border: 1px solid #e5e7eb;
         border-radius: 8px;
         padding: 16px;
-        margin: 24px 0;
+        margin: 20px 0;
       }
 
-      .link-fallback p {
+      .info-box p {
         font-size: 14px;
-        color: #065f46;
-        margin-bottom: 8px;
-      }
-
-      .link-fallback a {
-        color: #0f766e;
-        word-break: break-all;
-        font-size: 14px;
-      }
-
-      /* Warning box */
-      .warning {
-        background-color: #fef3c7;
-        border: 1px solid #f59e0b;
-        border-radius: 8px;
-        padding: 16px;
-        margin: 24px 0;
-      }
-
-      .warning p {
-        color: #92400e;
-        font-weight: 600;
-        margin: 0;
-        font-size: 14px;
-      }
-
-      /* Security notice */
-      .security-notice {
-        background-color: #f3f4f6;
-        border-radius: 8px;
-        padding: 20px;
-        margin: 24px 0;
-      }
-
-      .security-notice p {
         color: #374151;
-        font-size: 14px;
         margin: 0;
+        line-height: 1.6;
+      }
+
+      .info-box p + p {
+        margin-top: 8px;
+      }
+
+      .info-box strong {
+        color: #101828;
+        font-weight: 600;
+      }
+
+      .info-box a {
+        color: #00bba7;
+        word-break: break-all;
+        text-decoration: none;
+      }
+
+      .info-box a:hover {
+        text-decoration: underline;
+      }
+
+      /* Link fallback - uses base info-box style */
+      .link-fallback {
+        background-color: #f8f9fa;
+        border-color: #e5e7eb;
+      }
+
+      /* Warning box - uses base info-box style */
+      .warning {
+        background-color: #f8f9fa;
+        border-color: #e5e7eb;
+      }
+
+      /* Security notice - uses base info-box style */
+      .security-notice {
+        background-color: #f8f9fa;
+        border-color: #e5e7eb;
       }
 
       /* Footer */
@@ -224,14 +203,18 @@ PASSWORD_RESET_TEMPLATE = """
 
       .footer p {
         font-size: 12px;
-        color: #6b7280;
+        color: #657282;
         margin: 0;
         line-height: 1.5;
       }
 
       .footer a {
-        color: #0f766e;
+        color: #00bba7;
         text-decoration: none;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
       }
 
       /* Responsive design */
@@ -245,6 +228,20 @@ PASSWORD_RESET_TEMPLATE = """
         .content,
         .footer {
           padding: 24px 20px;
+        }
+
+        .logo-container {
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .logo-image {
+          width: 32px;
+          height: 32px;
+        }
+
+        .logo {
+          font-size: 24px;
         }
 
         .content h1 {
@@ -283,6 +280,10 @@ PASSWORD_RESET_TEMPLATE = """
           background-color: #111827;
           border-top-color: #374151;
         }
+
+        .footer p {
+          color: #9ca3af;
+        }
       }
     </style>
   </head>
@@ -291,112 +292,418 @@ PASSWORD_RESET_TEMPLATE = """
       <div class="email-container">
         <!-- Header -->
         <div class="header">
-          <div class="logo">HealthCare Pro</div>
-          <div class="tagline">Secure Health Management</div>
+          <div class="logo-container">
+            <img src="https://storage.googleapis.com/vhealth-dev-public/favicon.svg" alt="VHealth Logo" class="logo-image" />
+            <div class="logo">VHealth</div>
+          </div>
+          <div class="tagline">Quản lý sức khỏe thông minh</div>
         </div>
 
         <!-- Content -->
         <div class="content">
-          <h1>Password Reset Request</h1>
+          <h1>Chào mừng, {{ first_name }}!</h1>
 
-          <div class="greeting">Hello {{ first_name }},</div>
+          <div class="greeting">Xin chào {{ first_name }},</div>
 
           <p>
-            We received a request to reset your password for your HealthCare Pro
-            account. To ensure the security of your health information, we've
-            generated a secure reset link for you.
+            Cảm ơn bạn đã đăng ký tài khoản với VHealth. Vui lòng xác thực địa chỉ email
+            bằng cách nhấp vào nút bên dưới:
           </p>
 
           <div class="button-container">
-            <a href="{{ reset_url }}" class="button" role="button"
-              >Reset Your Password</a
+            <a href="{{ verification_url }}" class="button" role="button"
+              >Xác thực Email</a
             >
           </div>
 
-          <div class="link-fallback">
+          <div class="info-box link-fallback">
             <p>
-              <strong>Button not working?</strong> If the button above doesn't
-              work, please:
+              <strong>Nút không hoạt động?</strong> Sao chép và dán liên kết sau vào trình duyệt:
             </p>
-            <ol
-              style="
-                color: #065f46;
-                font-size: 14px;
-                margin: 8px 0 0 20px;
-                padding: 0;
-              "
-            >
-              <li>Right-click the "Reset Your Password" button above</li>
-              <li>Select "Copy link address" from the menu</li>
-              <li>Paste the link into your browser's address bar</li>
-            </ol>
-            <p
-              style="
-                font-size: 12px;
-                color: #065f46;
-                margin-top: 12px;
-                font-style: italic;
-              "
-            >
-              For security reasons, we don't display the full reset link in this
-              email.
+            <p>
+              <a href="{{ verification_url }}">{{ verification_url }}</a>
             </p>
           </div>
 
-          <div class="warning">
+          <div class="info-box warning">
             <p>
-              ⏰ This reset link will expire in {{ expiry_minutes }} minutes for
-              your security.
+              Liên kết xác thực này sẽ hết hạn sau {{ expiry_minutes }} phút.
             </p>
           </div>
 
-          <div class="security-notice">
+          <div class="info-box security-notice">
             <p>
-              <strong>🔒 Security Notice:</strong> If you didn't request this
-              password reset, please ignore this email and consider:
-            </p>
-            <ul
-              style="
-                margin: 8px 0 0 20px;
-                padding: 0;
-                color: #374151;
-                font-size: 14px;
-              "
-            >
-              <li>Checking if someone else has access to your email</li>
-              <li>Reviewing recent login activity on your account</li>
-              <li>Contacting our security team if you have concerns</li>
-            </ul>
-            <p style="margin-top: 12px">
-              Your password will remain unchanged, and your account remains
-              secure.
+              <strong>Thông báo bảo mật:</strong> Nếu bạn không tạo tài khoản
+              với chúng tôi, vui lòng bỏ qua email này. Tài khoản của bạn vẫn an toàn và không có thay đổi nào được thực hiện.
             </p>
           </div>
 
           <p>
-            Need help? Contact our support team at
-            <a href="mailto:support@healthcarepro.com" style="color: #0f766e"
-              >support@healthcarepro.com</a
+            Cần hỗ trợ? Liên hệ với chúng tôi tại
+            <a href="mailto:support@vhealth.io.vn" style="color: #00bba7"
+              >support@vhealth.io.vn</a
             >
-            or call <strong>(555) 123-4567</strong> during business hours.
           </p>
         </div>
 
         <!-- Footer -->
         <div class="footer">
           <p>
-            This is an automated security email from HealthCare Pro.<br />
-            Please do not reply to this email address.
+            Đây là email tự động từ VHealth.<br />
+            Vui lòng không trả lời email này.
           </p>
-          <p style="margin-top: 12px">
-            <a href="#" style="margin: 0 8px">Privacy Policy</a> |
-            <a href="#" style="margin: 0 8px">Security Center</a> |
-            <a href="#" style="margin: 0 8px">Support</a> |
-            <a href="#" style="margin: 0 8px">Contact Us</a>
+          <p style="margin-top: 16px; font-size: 11px; color: #95a1af">
+            VHealth | © 2025 Bản quyền thuộc về VHealth
           </p>
-          <p style="margin-top: 16px; font-size: 11px; color: #9ca3af">
-            HealthCare Pro, Inc. | 123 Medical Center Dr, Suite 100<br />
-            Healthcare City, HC 12345 | © 2025 All rights reserved
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+"""
+
+# Password reset template
+PASSWORD_RESET_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đặt lại Mật khẩu - VHealth</title>
+    <link rel="icon" type="image/svg+xml" href="https://storage.googleapis.com/vhealth-dev-public/favicon.svg" />
+    <style>
+      /* Reset and base styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        line-height: 1.6;
+        color: #1a1a1a;
+        background-color: #f8f9fa;
+        margin: 0;
+        padding: 0;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+      }
+
+      /* Container */
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+
+      /* Header */
+      .header {
+        background: linear-gradient(135deg, #00bba7 0%, #00bc7d 100%);
+        padding: 32px 40px;
+        text-align: center;
+      }
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .logo-image {
+        width: 40px;
+        height: 40px;
+        display: block;
+      }
+
+      .logo {
+        font-size: 28px;
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: -0.025em;
+        margin: 0;
+      }
+
+      .tagline {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.025em;
+        text-transform: uppercase;
+      }
+
+      /* Content */
+      .content {
+        padding: 40px;
+      }
+
+      .content h1 {
+        font-size: 24px;
+        font-weight: 700;
+        color: #101828;
+        margin-bottom: 24px;
+        letter-spacing: -0.025em;
+        line-height: 1.3;
+      }
+
+      .greeting {
+        font-size: 16px;
+        color: #374151;
+        margin-bottom: 20px;
+        font-weight: 500;
+      }
+
+      .content p {
+        font-size: 16px;
+        color: #6a7282;
+        margin-bottom: 20px;
+        line-height: 1.7;
+      }
+
+      /* Button */
+      .button-container {
+        text-align: center;
+        margin: 32px 0;
+      }
+
+      .button {
+        display: inline-block;
+        padding: 16px 32px;
+        background: linear-gradient(135deg, #00bba7 0%, #00bc7d 100%);
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 16px;
+        letter-spacing: 0.025em;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 187, 167, 0.3);
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 8px -1px rgba(0, 187, 167, 0.4);
+      }
+
+      /* Unified info box styles */
+      .info-box {
+        background-color: #f8f9fa;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 20px 0;
+      }
+
+      .info-box p {
+        font-size: 14px;
+        color: #374151;
+        margin: 0;
+        line-height: 1.6;
+      }
+
+      .info-box p + p {
+        margin-top: 8px;
+      }
+
+      .info-box strong {
+        color: #101828;
+        font-weight: 600;
+      }
+
+      .info-box a {
+        color: #00bba7;
+        word-break: break-all;
+        text-decoration: none;
+      }
+
+      .info-box a:hover {
+        text-decoration: underline;
+      }
+
+      /* Link fallback - uses base info-box style */
+      .link-fallback {
+        background-color: #f8f9fa;
+        border-color: #e5e7eb;
+      }
+
+      /* Warning box - uses base info-box style */
+      .warning {
+        background-color: #f8f9fa;
+        border-color: #e5e7eb;
+      }
+
+      /* Security notice - uses base info-box style */
+      .security-notice {
+        background-color: #f8f9fa;
+        border-color: #e5e7eb;
+      }
+
+      /* Footer */
+      .footer {
+        background-color: #f8f9fa;
+        padding: 32px 40px;
+        border-top: 1px solid #e5e7eb;
+        text-align: center;
+      }
+
+      .footer p {
+        font-size: 12px;
+        color: #657282;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      .footer a {
+        color: #00bba7;
+        text-decoration: none;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
+
+      /* Responsive design */
+      @media only screen and (max-width: 600px) {
+        .email-container {
+          margin: 0;
+          border-radius: 0;
+        }
+
+        .header,
+        .content,
+        .footer {
+          padding: 24px 20px;
+        }
+
+        .logo-container {
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .logo-image {
+          width: 32px;
+          height: 32px;
+        }
+
+        .logo {
+          font-size: 24px;
+        }
+
+        .content h1 {
+          font-size: 20px;
+        }
+
+        .button {
+          padding: 14px 24px;
+          font-size: 15px;
+        }
+      }
+
+      /* Dark mode support */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #111827;
+        }
+
+        .email-container {
+          background-color: #1f2937;
+        }
+
+        .content h1 {
+          color: #f9fafb;
+        }
+
+        .greeting {
+          color: #d1d5db;
+        }
+
+        .content p {
+          color: #9ca3af;
+        }
+
+        .footer {
+          background-color: #111827;
+          border-top-color: #374151;
+        }
+
+        .footer p {
+          color: #9ca3af;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div style="padding: 20px 0">
+      <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+          <div class="logo-container">
+            <img src="https://storage.googleapis.com/vhealth-dev-public/favicon.svg" alt="VHealth Logo" class="logo-image" />
+            <div class="logo">VHealth</div>
+          </div>
+          <div class="tagline">Quản lý sức khỏe thông minh</div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+          <h1>Yêu cầu Đặt lại Mật khẩu</h1>
+
+          <div class="greeting">Xin chào {{ first_name }},</div>
+
+          <p>
+            Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản VHealth của bạn.
+            Nhấp vào nút bên dưới để đặt lại mật khẩu:
+          </p>
+
+          <div class="button-container">
+            <a href="{{ reset_url }}" class="button" role="button"
+              >Đặt lại Mật khẩu</a
+            >
+          </div>
+
+          <div class="info-box link-fallback">
+            <p>
+              <strong>Nút không hoạt động?</strong> Vui lòng liên hệ với đội ngũ hỗ trợ
+              để được hỗ trợ đặt lại mật khẩu.
+            </p>
+          </div>
+
+          <div class="info-box warning">
+            <p>
+              Liên kết đặt lại này sẽ hết hạn sau {{ expiry_minutes }} phút.
+            </p>
+          </div>
+
+          <div class="info-box security-notice">
+            <p>
+              <strong>Thông báo bảo mật:</strong> Nếu bạn không yêu cầu đặt lại
+              mật khẩu này, vui lòng bỏ qua email này. Mật khẩu của bạn sẽ không thay đổi và tài khoản của bạn vẫn an toàn.
+            </p>
+          </div>
+
+          <p>
+            Cần hỗ trợ? Liên hệ với chúng tôi tại
+            <a href="mailto:support@vhealth.io.vn" style="color: #00bba7"
+              >support@vhealth.io.vn</a
+            >
+          </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+          <p>
+            Đây là email bảo mật tự động từ VHealth.<br />
+            Vui lòng không trả lời email này.
+          </p>
+          <p style="margin-top: 16px; font-size: 11px; color: #95a1af">
+            VHealth | © 2025 Bản quyền thuộc về VHealth
           </p>
         </div>
       </div>
