@@ -2,6 +2,7 @@
 Authentication log database operations.
 """
 
+import json
 import asyncpg
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -21,11 +22,12 @@ class AuthLogRepository(BaseRepository):
         details: Optional[Dict[str, Any]] = None,
     ) -> Optional[asyncpg.Record]:
         """Create a new authentication log entry."""
+        details_json = json.dumps(details) if details is not None else None
         query = """
             INSERT INTO auth_logs (
                 user_id, event_type, ip_address, user_agent, success, details
             )
-            VALUES ($1, $2, $3, $4, $5, $6)
+            VALUES ($1, $2, $3, $4, $5, $6::jsonb)
             RETURNING id, user_id, event_type, ip_address, user_agent, success, details, created_at
         """
         return await self.fetch_one(
@@ -35,7 +37,7 @@ class AuthLogRepository(BaseRepository):
             ip_address,
             user_agent,
             success,
-            details,
+            details_json,
         )
 
     async def get_auth_logs_by_user(
