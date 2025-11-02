@@ -113,21 +113,21 @@ class AuthLogRepository(BaseRepository):
         if user_id:
             query = """
                 SELECT COUNT(*) FROM auth_logs
-                WHERE user_id = $1 AND success = FALSE 
+                WHERE user_id = $1 AND success = FALSE
                 AND created_at > NOW() - make_interval(hours => $2)
             """
             result = await self.fetch_one(query, user_id, hours)
         elif ip_address:
             query = """
                 SELECT COUNT(*) FROM auth_logs
-                WHERE ip_address = $1 AND success = FALSE 
+                WHERE ip_address = $1 AND success = FALSE
                 AND created_at > NOW() - make_interval(hours => $2)
             """
             result = await self.fetch_one(query, ip_address, hours)
         else:
             query = """
                 SELECT COUNT(*) FROM auth_logs
-                WHERE success = FALSE 
+                WHERE success = FALSE
                 AND created_at > NOW() - make_interval(hours => $1)
             """
             result = await self.fetch_one(query, hours)
