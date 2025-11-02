@@ -12,6 +12,7 @@ from app.db.database import get_database_pool
 from app.auth.dependencies import get_current_active_user
 from app.schemas.user import (
     UserInDB,
+    UserResponse,
     TokenPair,
     RefreshToken,
     PasswordResetRequest,
@@ -367,9 +368,10 @@ async def logout_all(
         )
 
 
-@router.get("/me", response_model=UserInDB)
+@router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ):
     """Get current authenticated user information."""
-    return current_user
+    # Return safe user data without sensitive fields
+    return UserResponse.model_validate(current_user)
