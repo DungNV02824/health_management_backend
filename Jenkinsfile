@@ -421,6 +421,7 @@ AI summarization will not be available without this secret.
                             --set-secrets "MAIL_FROM=vhealth-${params.ENVIRONMENT}-mail-from:latest" \
                             --set-secrets "MAIL_SERVER=vhealth-${params.ENVIRONMENT}-mail-server:latest" \
                             --set-secrets "OPENROUTER_API_KEY=vhealth-${params.ENVIRONMENT}-openrouter-api-key:latest" \
+                            --set-env-vars "WEBUI_URL=${params.ENVIRONMENT == 'prod' ? 'https://vhealth.io.vn' : 'https://dev.vhealth.io.vn'}" \
                             --cpu 2 \
                             --memory 2Gi \
                             --min-instances 0 \

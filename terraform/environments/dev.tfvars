@@ -51,7 +51,7 @@ app_version = "1.0.0-dev"
 mail_server = "smtp.gmail.com"
 mail_port   = "587"
 mail_from   = "congsynh.vo@gmail.com"
-webui_url   = "http://localhost:3000"
+webui_url   = "https://dev.vhealth.io.vn"
 
 # Domain Configuration (Optional - set enable_custom_domain = true to activate)
 enable_custom_domain = true  # Set to true when ready to configure custom domain
