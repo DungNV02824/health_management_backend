@@ -5,6 +5,7 @@ Revises:
 Create Date: 2025-10-02 21:36:17.645623
 
 """
+
 from migrations.utils import database_connect
 
 # revision identifiers, used by Alembic.

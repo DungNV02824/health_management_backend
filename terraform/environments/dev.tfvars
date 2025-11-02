@@ -28,12 +28,12 @@ cloud_sql_deletion_protection = false
 # Cloud Run
 cloud_run_service_name    = "vhealth-backend-dev"
 cloud_run_image           = "asia-southeast1-docker.pkg.dev/vhealth-dev/vhealth-backend-dev/health-api:latest"
-cloud_run_cpu_limit       = "1000m"
-cloud_run_memory_limit    = "512Mi"
+cloud_run_cpu_limit       = "2000m"
+cloud_run_memory_limit    = "2Gi"
 cloud_run_max_instances   = 3
 cloud_run_min_instances   = 0
 cloud_run_timeout_seconds = 300
-cloud_run_concurrency     = 80
+cloud_run_concurrency     = 15
 
 # Secret Manager (These should be provided via environment variables or secure injection)
 # database_url         = "postgresql://user:password@host:5432/dbname"

@@ -15,6 +15,7 @@ python-dotenv==1.0.0
 # Authentication and security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
 python-multipart==0.0.12
 
 # OAuth and Social Authentication
@@ -34,3 +35,10 @@ requests==2.32.3
 
 # Google Cloud dependencies for Cloud Run
 google-cloud-secret-manager==2.20.2
+google-cloud-storage>=2.10.0
+
+# Q&A Service dependencies
+sentence-transformers==5.1.2
+pandas==2.3.3
+openpyxl==3.1.5
+torch==2.9.0

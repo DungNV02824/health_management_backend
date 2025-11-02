@@ -160,6 +160,19 @@ logs/
 *.temp
 .tmp/
 
-
 # Test database
 *_test
+
+# Q&A Model files (should be downloaded from GCS, not tracked in git)
+models/vietnamese-sbert/*
+!models/vietnamese-sbert/README.md
+models/**/*.safetensors
+models/**/*.bin
+models/**/*.onnx
+models/**/*.pt
+models/**/*.pth
+models/**/*.h5
+
+# Q&A Data files (should be in GCS, not tracked in git)
+data.xlsx
+tuvung.txt
