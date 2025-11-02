@@ -116,6 +116,8 @@ module "secret_manager" {
     google_client_secret = var.google_client_secret
     mail_username        = var.mail_username
     mail_password        = var.mail_password
+    mail_from            = var.mail_from
+    mail_server          = var.mail_server
     # Scheduler endpoint URL - configure this to point to actual scheduled endpoint
     scheduler_endpoint_url = var.scheduler_endpoint_url
   }

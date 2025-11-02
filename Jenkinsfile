@@ -141,6 +141,8 @@ pipeline {
                     env.TF_VAR_google_client_secret = fetchSecret("google-client-secret", "placeholder-client-secret")
                     env.TF_VAR_mail_username        = fetchSecret("mail-username", "placeholder@example.com")
                     env.TF_VAR_mail_password        = fetchSecret("mail-password", "placeholder-password")
+                    env.TF_VAR_mail_from            = fetchSecret("mail-from", "no-reply@vhealth.io.vn")
+                    env.TF_VAR_mail_server          = fetchSecret("mail-server", "smtp.gmail.com")
 
                     echo 'Secrets fetched successfully!'
                 }
@@ -416,6 +418,8 @@ AI summarization will not be available without this secret.
                             --set-secrets "GOOGLE_CLIENT_SECRET=vhealth-${params.ENVIRONMENT}-google-client-secret:latest" \
                             --set-secrets "MAIL_USERNAME=vhealth-${params.ENVIRONMENT}-mail-username:latest" \
                             --set-secrets "MAIL_PASSWORD=vhealth-${params.ENVIRONMENT}-mail-password:latest" \
+                            --set-secrets "MAIL_FROM=vhealth-${params.ENVIRONMENT}-mail-from:latest" \
+                            --set-secrets "MAIL_SERVER=vhealth-${params.ENVIRONMENT}-mail-server:latest" \
                             --set-secrets "OPENROUTER_API_KEY=vhealth-${params.ENVIRONMENT}-openrouter-api-key:latest" \
                             --cpu 2 \
                             --memory 2Gi \

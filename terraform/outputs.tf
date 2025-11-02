@@ -68,6 +68,8 @@ output "cloud_run_config" {
       GOOGLE_CLIENT_SECRET = module.secret_manager.secret_versions["google_client_secret"]
       MAIL_USERNAME        = module.secret_manager.secret_versions["mail_username"]
       MAIL_PASSWORD        = module.secret_manager.secret_versions["mail_password"]
+      MAIL_FROM            = module.secret_manager.secret_versions["mail_from"]
+      MAIL_SERVER          = module.secret_manager.secret_versions["mail_server"]
     }
   }
 }
