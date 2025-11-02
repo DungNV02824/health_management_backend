@@ -4,7 +4,7 @@ User business logic and services.
 
 import asyncpg
 from typing import Optional, List
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 from app.constants import UserProviders
 from app.db.user import UserRepository
 from app.schemas.user import (
@@ -25,6 +25,8 @@ from app.helpers import (
     verify_password,
     create_access_token,
     create_refresh_token,
+    verify_refresh_token,
+    hash_refresh_token,
     create_verification_token,
     verify_verification_token,
 )
@@ -311,6 +313,11 @@ class UserService:
             expires_delta=refresh_token_expires,
         )
 
+        # Store refresh token in database
+        token_hash = hash_refresh_token(refresh_token)
+        expires_at = datetime.utcnow() + refresh_token_expires
+        await self.user_repo.store_refresh_token(user.id, token_hash, expires_at)
+
         return TokenPair(access_token=access_token, refresh_token=refresh_token)
 
     # Enhanced login with refresh token support
@@ -334,4 +341,76 @@ class UserService:
             expires_delta=refresh_token_expires,
         )
 
+        # Store refresh token in database
+        token_hash = hash_refresh_token(refresh_token)
+        expires_at = datetime.utcnow() + refresh_token_expires
+        await self.user_repo.store_refresh_token(user.id, token_hash, expires_at)
+
         return TokenPair(access_token=access_token, refresh_token=refresh_token)
+
+    async def refresh_access_token(self, refresh_token: str) -> TokenPair:
+        """Refresh access token using a refresh token."""
+        # Verify refresh token JWT
+        payload = verify_refresh_token(refresh_token)
+        if not payload:
+            raise ValueError("Invalid refresh token")
+
+        # Check if token exists in database and is valid
+        token_hash = hash_refresh_token(refresh_token)
+        token_record = await self.user_repo.get_refresh_token_by_hash(token_hash)
+
+        if not token_record:
+            raise ValueError("Refresh token not found or already revoked")
+
+        # Check if token is expired (handle timezone-aware comparison)
+        expires_at = token_record["expires_at"]
+        if isinstance(expires_at, datetime) and expires_at.tzinfo is not None:
+            # Database returns timezone-aware datetime
+            if datetime.now(timezone.utc) > expires_at:
+                raise ValueError("Refresh token has expired")
+        else:
+            # Fallback for timezone-naive datetime
+            if datetime.utcnow() > expires_at:
+                raise ValueError("Refresh token has expired")
+
+        # Get user
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise ValueError("Invalid token payload")
+
+        user = await self.get_user_by_id(user_id)
+        if not user or not user.is_active:
+            raise ValueError("User not found or inactive")
+
+        # Revoke old refresh token
+        await self.user_repo.revoke_refresh_token(token_hash)
+
+        # Create new access token
+        access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+        access_token = create_access_token(
+            data={"sub": user.email, "user_id": user.id},
+            expires_delta=access_token_expires,
+        )
+
+        # Create new refresh token (token rotation)
+        refresh_token_expires = timedelta(days=settings.refresh_token_expire_days)
+        new_refresh_token = create_refresh_token(
+            data={"sub": user.email, "user_id": user.id},
+            expires_delta=refresh_token_expires,
+        )
+
+        # Store new refresh token in database
+        new_token_hash = hash_refresh_token(new_refresh_token)
+        expires_at = datetime.utcnow() + refresh_token_expires
+        await self.user_repo.store_refresh_token(user.id, new_token_hash, expires_at)
+
+        return TokenPair(access_token=access_token, refresh_token=new_refresh_token)
+
+    async def revoke_refresh_token(self, refresh_token: str) -> bool:
+        """Revoke a refresh token."""
+        token_hash = hash_refresh_token(refresh_token)
+        return await self.user_repo.revoke_refresh_token(token_hash)
+
+    async def logout_user(self, user_id: int) -> bool:
+        """Logout user by revoking all refresh tokens."""
+        return await self.user_repo.revoke_all_user_refresh_tokens(user_id)

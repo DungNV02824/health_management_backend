@@ -13,10 +13,12 @@ from app.auth.dependencies import get_current_active_user
 from app.schemas.user import (
     UserInDB,
     TokenPair,
+    RefreshToken,
     PasswordResetRequest,
     PasswordReset,
     EmailVerification,
     GoogleOAuthRequest,
+    UserLogin,
 )
 
 router = APIRouter()
@@ -278,7 +280,7 @@ async def google_callback_redirect(
 # Enhanced login with refresh token
 @router.post("/login-with-refresh", response_model=TokenPair)
 async def login_with_refresh_token(
-    login_data,
+    login_data: UserLogin,
     user_service: UserService = Depends(get_user_service),
 ):
     """Login user and return access and refresh tokens."""
@@ -294,6 +296,74 @@ async def login_with_refresh_token(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to login"
+        )
+
+
+@router.post("/refresh", response_model=TokenPair)
+async def refresh_token(
+    refresh_token_data: RefreshToken,
+    user_service: UserService = Depends(get_user_service),
+):
+    """Refresh access token using a refresh token."""
+    try:
+        tokens = await user_service.refresh_access_token(
+            refresh_token_data.refresh_token
+        )
+        return tokens
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to refresh token",
+        )
+
+
+@router.post("/logout", status_code=status.HTTP_200_OK)
+async def logout(
+    refresh_token_data: RefreshToken,
+    user_service: UserService = Depends(get_user_service),
+):
+    """Logout user by revoking a refresh token."""
+    try:
+        success = await user_service.revoke_refresh_token(
+            refresh_token_data.refresh_token
+        )
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to revoke token",
+            )
+        return {"message": "Logged out successfully"}
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to logout",
+        )
+
+
+@router.post("/logout-all", status_code=status.HTTP_200_OK)
+async def logout_all(
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)],
+    user_service: UserService = Depends(get_user_service),
+):
+    """Logout user from all devices by revoking all refresh tokens."""
+    try:
+        success = await user_service.logout_user(current_user.id)
+        return {"message": "Logged out from all devices successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to logout",
         )
 
 

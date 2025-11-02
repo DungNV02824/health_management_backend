@@ -213,3 +213,62 @@ class UserRepository(BaseRepository):
         """
         result = await self.execute(query, user_id, google_id, avatar_url, now)
         return "UPDATE 1" in result
+
+    # Refresh Token methods
+
+    async def store_refresh_token(
+        self, user_id: int, token_hash: str, expires_at: datetime
+    ) -> Optional[asyncpg.Record]:
+        """Store a refresh token in the database."""
+        query = """
+            INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
+            VALUES ($1, $2, $3)
+            RETURNING id, user_id, token_hash, expires_at, revoked, created_at, updated_at
+        """
+        return await self.fetch_one(query, user_id, token_hash, expires_at)
+
+    async def get_refresh_token_by_hash(
+        self, token_hash: str
+    ) -> Optional[asyncpg.Record]:
+        """Get a refresh token by its hash."""
+        query = """
+            SELECT id, user_id, token_hash, expires_at, revoked, created_at, updated_at
+            FROM refresh_tokens
+            WHERE token_hash = $1 AND revoked = FALSE
+        """
+        return await self.fetch_one(query, token_hash)
+
+    async def revoke_refresh_token(self, token_hash: str) -> bool:
+        """Revoke a refresh token by marking it as revoked."""
+        now = datetime.utcnow()
+        query = """
+            UPDATE refresh_tokens
+            SET revoked = TRUE, updated_at = $2
+            WHERE token_hash = $1 AND revoked = FALSE
+        """
+        result = await self.execute(query, token_hash, now)
+        return "UPDATE 1" in result or "UPDATE 0" in result
+
+    async def revoke_all_user_refresh_tokens(self, user_id: int) -> bool:
+        """Revoke all refresh tokens for a user."""
+        now = datetime.utcnow()
+        query = """
+            UPDATE refresh_tokens
+            SET revoked = TRUE, updated_at = $2
+            WHERE user_id = $1 AND revoked = FALSE
+        """
+        result = await self.execute(query, user_id, now)
+        return True  # Always return True, even if no tokens were revoked
+
+    async def cleanup_expired_refresh_tokens(self) -> int:
+        """Delete expired refresh tokens from the database."""
+        query = """
+            DELETE FROM refresh_tokens
+            WHERE expires_at < NOW()
+        """
+        result = await self.execute(query)
+        # Extract number from result string like "DELETE 5"
+        try:
+            return int(result.split()[-1]) if result.split()[-1].isdigit() else 0
+        except (IndexError, ValueError):
+            return 0

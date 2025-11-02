@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Any, Dict
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+import hashlib
 from app.config import settings
 
 # Password hashing
@@ -83,6 +84,15 @@ def verify_refresh_token(token: str) -> Optional[Dict[str, Any]]:
         return payload
     except JWTError:
         return None
+
+
+def hash_refresh_token(token: str) -> str:
+    """Hash a refresh token for secure database storage using SHA256.
+
+    Uses SHA256 (deterministic) instead of bcrypt so we can verify tokens
+    by comparing hashes directly.
+    """
+    return hashlib.sha256(token.encode()).hexdigest()
 
 
 def create_verification_token(
