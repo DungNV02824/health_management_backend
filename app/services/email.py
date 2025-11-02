@@ -18,7 +18,7 @@ EMAIL_VERIFICATION_TEMPLATE = """
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Xác thực Email - VHealth</title>
-    <link rel="icon" type="image/svg+xml" href="https://storage.googleapis.com/vhealth-dev-public/favicon.svg" />
+    <link rel="icon" type="image/png" href="https://storage.googleapis.com/vhealth-dev-public/favicon.png" />
     <style>
       /* Reset and base styles */
       * {
@@ -293,7 +293,7 @@ EMAIL_VERIFICATION_TEMPLATE = """
         <!-- Header -->
         <div class="header">
           <div class="logo-container">
-            <img src="https://storage.googleapis.com/vhealth-dev-public/favicon.svg" alt="VHealth Logo" class="logo-image" />
+            <img src="https://storage.googleapis.com/vhealth-dev-public/favicon.png" alt="VHealth Logo" class="logo-image" style="display:block; width:40px; height:40px;" width="40" height="40" />
             <div class="logo">VHealth</div>
           </div>
           <div class="tagline">Quản lý sức khỏe thông minh</div>
@@ -370,7 +370,7 @@ PASSWORD_RESET_TEMPLATE = """
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Đặt lại Mật khẩu - VHealth</title>
-    <link rel="icon" type="image/svg+xml" href="https://storage.googleapis.com/vhealth-dev-public/favicon.svg" />
+    <link rel="icon" type="image/png" href="https://storage.googleapis.com/vhealth-dev-public/favicon.png" />
     <style>
       /* Reset and base styles */
       * {
@@ -645,7 +645,7 @@ PASSWORD_RESET_TEMPLATE = """
         <!-- Header -->
         <div class="header">
           <div class="logo-container">
-            <img src="https://storage.googleapis.com/vhealth-dev-public/favicon.svg" alt="VHealth Logo" class="logo-image" />
+            <img src="https://storage.googleapis.com/vhealth-dev-public/favicon.png" alt="VHealth Logo" class="logo-image" style="display:block; width:40px; height:40px;" width="40" height="40" />
             <div class="logo">VHealth</div>
           </div>
           <div class="tagline">Quản lý sức khỏe thông minh</div>
