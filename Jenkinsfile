@@ -12,6 +12,11 @@ pipeline {
             defaultValue: 'develop',
             description: 'Git branch to deploy'
         )
+        booleanParam(
+            name: 'REBUILD_BASE_IMAGE',
+            defaultValue: false,
+            description: 'Rebuild base image with dependencies (set to true when requirements-prod.txt changes)'
+        )
     }
 
     environment {
@@ -22,9 +27,11 @@ pipeline {
 
         ARTIFACT_REGISTRY_REPO = "vhealth-backend-${params.ENVIRONMENT}"
         IMAGE_NAME = "vhealth-backend"
+        BASE_IMAGE_NAME = "vhealth-backend-base"
         IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
         IMAGE_FULL = "${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${IMAGE_NAME}:${IMAGE_TAG}"
         IMAGE_LATEST = "${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${IMAGE_NAME}:latest"
+        BASE_IMAGE_LATEST = "${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${BASE_IMAGE_NAME}:latest"
 
         TF_IN_AUTOMATION = 'true'
         TF_VAR_FILE = "terraform/environments/${params.ENVIRONMENT}.tfvars"
@@ -36,6 +43,7 @@ pipeline {
         timeout(time: 60, unit: 'MINUTES')
         timestamps()
         disableConcurrentBuilds()
+        skipDefaultCheckout(false)
     }
 
     stages {
@@ -83,87 +91,7 @@ pipeline {
             }
         }
 
-        stage('Setup Q&A Models') {
-            steps {
-                script {
-                    echo 'Setting up Q&A model storage...'
-
-                    // Define GCS bucket for models
-                    env.GCS_MODEL_BUCKET = "vhealth-${params.ENVIRONMENT}-models"
-
-                    // Check if bucket exists, create if needed
-                    def bucketExists = sh(
-                        script: "gsutil ls -b gs://${GCS_MODEL_BUCKET} 2>/dev/null || echo 'not_found'",
-                        returnStdout: true
-                    ).trim()
-                    if (bucketExists.contains('not_found')) {
-                        echo "Creating GCS bucket: ${GCS_MODEL_BUCKET}"
-                        sh """
-                            gsutil mb -p ${GCP_PROJECT_ID} -l ${GCP_REGION} gs://${GCS_MODEL_BUCKET}
-                            gsutil lifecycle set - gs://${GCS_MODEL_BUCKET} <<EOF
-{
-  "lifecycle": {
-    "rule": [
-      {
-        "action": {"type": "Delete"},
-        "condition": {"age": 90, "matchesPrefix": ["tmp/"]}
-      }
-    ]
-  }
-}
-EOF
-                        """
-                    } else {
-                        echo "GCS bucket already exists: ${GCS_MODEL_BUCKET}"
-                    }
-                    // Check if model files exist in bucket
-                    def modelExists = sh(
-                        script: "gsutil -q stat gs://${GCS_MODEL_BUCKET}/models/vietnamese-sbert/config.json || echo 'not_found'",
-                        returnStdout: true
-                    ).trim()
-                    if (modelExists.contains('not_found')) {
-                        echo """
-========================================
-WARNING: Q&A model files not found in GCS!
-========================================
-To upload model files, run:
-  gsutil -m cp -r models/vietnamese-sbert gs://${GCS_MODEL_BUCKET}/models/
-  gsutil -m cp data.xlsx gs://${GCS_MODEL_BUCKET}/data/
-  gsutil -m cp tuvung.txt gs://${GCS_MODEL_BUCKET}/data/
-
-The service will attempt to download from Hugging Face as fallback.
-========================================
-                        """
-                    } else {
-                        echo "Model files found in GCS bucket"
-                    }
-                    // Ensure OpenRouter API key secret exists
-                    def secretExists = sh(
-                        script: "gcloud secrets describe vhealth-${params.ENVIRONMENT}-openrouter-api-key --project=${GCP_PROJECT_ID} 2>/dev/null || echo 'not_found'",
-                        returnStdout: true
-                    ).trim()
-                    if (secretExists.contains('not_found')) {
-                        echo """
-========================================
-WARNING: OpenRouter API key secret not found!
-========================================
-To create the secret, run:
-  echo -n 'your-api-key-here' | gcloud secrets create vhealth-${params.ENVIRONMENT}-openrouter-api-key \\
-    --project=${GCP_PROJECT_ID} \\
-    --data-file=- \\
-    --replication-policy=automatic
-
-AI summarization will not be available without this secret.
-========================================
-                        """
-                    } else {
-                        echo "OpenRouter API key secret exists"
-                    }
-                }
-            }
-        }
-
-        stage('Terraform Init') {
+        stage('Terraform Init & Validate') {
             steps {
                 dir('terraform') {
                     script {
@@ -173,17 +101,9 @@ AI summarization will not be available without this secret.
                                 -backend-config="bucket=${TF_BACKEND_BUCKET}" \
                                 -backend-config="prefix=terraform/state/${params.ENVIRONMENT}" \
                                 -reconfigure \
-                                -no-color
+                                -no-color \
+                                -upgrade
                         """
-                    }
-                }
-            }
-        }
-
-        stage('Terraform Validate') {
-            steps {
-                dir('terraform') {
-                    script {
                         echo 'Validating Terraform configuration...'
                         sh 'terraform validate -no-color'
                     }
@@ -227,17 +147,98 @@ AI summarization will not be available without this secret.
             }
         }
 
-        stage('Terraform Plan') {
-            steps {
-                dir('terraform') {
-                    script {
-                        echo 'Planning Terraform changes...'
-                        sh """
-                            terraform plan \
-                                -var-file="environments/${params.ENVIRONMENT}.tfvars" \
-                                -out=tfplan \
-                                -no-color
-                        """
+        stage('Setup Q&A Models & Terraform Plan') {
+            parallel {
+                stage('Setup Q&A Models') {
+                    steps {
+                        script {
+                            echo 'Setting up Q&A model storage...'
+
+                            env.GCS_MODEL_BUCKET = "vhealth-${params.ENVIRONMENT}-models"
+
+                            def bucketExists = sh(
+                                script: "gsutil ls -b gs://${GCS_MODEL_BUCKET} 2>/dev/null || echo 'not_found'",
+                                returnStdout: true
+                            ).trim()
+                            if (bucketExists.contains('not_found')) {
+                                echo "Creating GCS bucket: ${GCS_MODEL_BUCKET}"
+                                sh """
+                                    gsutil mb -p ${GCP_PROJECT_ID} -l ${GCP_REGION} gs://${GCS_MODEL_BUCKET}
+                                    gsutil lifecycle set - gs://${GCS_MODEL_BUCKET} <<EOF
+{
+  "lifecycle": {
+    "rule": [
+      {
+        "action": {"type": "Delete"},
+        "condition": {"age": 90, "matchesPrefix": ["tmp/"]}
+      }
+    ]
+  }
+}
+EOF
+                                """
+                            } else {
+                                echo "GCS bucket already exists: ${GCS_MODEL_BUCKET}"
+                            }
+                            def modelExists = sh(
+                                script: "gsutil -q stat gs://${GCS_MODEL_BUCKET}/models/vietnamese-sbert/config.json || echo 'not_found'",
+                                returnStdout: true
+                            ).trim()
+                            if (modelExists.contains('not_found')) {
+                                echo """
+========================================
+WARNING: Q&A model files not found in GCS!
+========================================
+To upload model files, run:
+  gsutil -m cp -r models/vietnamese-sbert gs://${GCS_MODEL_BUCKET}/models/
+  gsutil -m cp data.xlsx gs://${GCS_MODEL_BUCKET}/data/
+  gsutil -m cp tuvung.txt gs://${GCS_MODEL_BUCKET}/data/
+
+The service will attempt to download from Hugging Face as fallback.
+========================================
+                                """
+                            } else {
+                                echo "Model files found in GCS bucket"
+                            }
+                            // Ensure OpenRouter API key secret exists
+                            def secretExists = sh(
+                                script: "gcloud secrets describe vhealth-${params.ENVIRONMENT}-openrouter-api-key --project=${GCP_PROJECT_ID} 2>/dev/null || echo 'not_found'",
+                                returnStdout: true
+                            ).trim()
+                            if (secretExists.contains('not_found')) {
+                                echo """
+========================================
+WARNING: OpenRouter API key secret not found!
+========================================
+To create the secret, run:
+  echo -n 'your-api-key-here' | gcloud secrets create vhealth-${params.ENVIRONMENT}-openrouter-api-key \\
+    --project=${GCP_PROJECT_ID} \\
+    --data-file=- \\
+    --replication-policy=automatic
+
+AI summarization will not be available without this secret.
+========================================
+                                """
+                            } else {
+                                echo "OpenRouter API key secret exists"
+                            }
+                        }
+                    }
+                }
+                stage('Terraform Plan') {
+                    steps {
+                        dir('terraform') {
+                            script {
+                                echo 'Planning Terraform changes...'
+                                sh """
+                                    terraform plan \
+                                        -var-file="environments/${params.ENVIRONMENT}.tfvars" \
+                                        -out=tfplan \
+                                        -no-color \
+                                        -compact-warnings
+                                """
+                            }
+                        }
                     }
                 }
             }
@@ -273,17 +274,68 @@ AI summarization will not be available without this secret.
             }
         }
 
+        stage('Build/Pull Base Image') {
+            steps {
+                script {
+                    echo "Base Image Strategy: ${params.REBUILD_BASE_IMAGE ? 'REBUILD' : 'USE EXISTING'}"
+
+                    def baseImageCheck = sh(
+                        script: "docker pull ${BASE_IMAGE_LATEST} 2>&1",
+                        returnStatus: true
+                    )
+
+                    def imageNotFound = (baseImageCheck != 0)
+
+                    if (params.REBUILD_BASE_IMAGE || imageNotFound) {
+                        if (imageNotFound && !params.REBUILD_BASE_IMAGE) {
+                            echo "Base image not found, auto-rebuilding (first build or missing image)..."
+                        } else {
+                            echo "Rebuilding base image with dependencies..."
+                        }
+
+                        def previousBaseImage = "${BASE_IMAGE_LATEST}"
+                        sh """
+                            docker pull ${previousBaseImage} || echo "No previous base image found"
+                        """
+                        sh """
+                            DOCKER_BUILDKIT=1 docker build \
+                                -f Dockerfile.base \
+                                --cache-from ${previousBaseImage} \
+                                --tag ${BASE_IMAGE_LATEST} \
+                                --progress=plain \
+                                .
+                        """
+                        sh """
+                            docker push ${BASE_IMAGE_LATEST}
+                        """
+                        echo "Base image rebuilt and pushed: ${BASE_IMAGE_LATEST}"
+                    } else {
+                        echo "Using existing base image: ${BASE_IMAGE_LATEST}"
+                    }
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo "Building Docker image: ${IMAGE_FULL}"
+                    echo "Building application image: ${IMAGE_FULL}"
+                    echo "Using base image: ${BASE_IMAGE_LATEST}"
+
+                    def previousImage = "${IMAGE_LATEST}"
+                    sh """
+                        docker pull ${previousImage} || echo "No previous image found, building from scratch"
+                    """
                     sh """
                         DOCKER_BUILDKIT=1 docker build \
+                            --build-arg BASE_IMAGE=${BASE_IMAGE_LATEST} \
                             --build-arg BUILD_DATE=\$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
                             --build-arg VERSION=${IMAGE_TAG} \
                             --build-arg GIT_COMMIT=${GIT_COMMIT} \
-                            -t ${IMAGE_FULL} \
-                            -t ${IMAGE_LATEST} \
+                            --cache-from ${previousImage} \
+                            --tag ${IMAGE_FULL} \
+                            --tag ${IMAGE_LATEST} \
+                            --progress=plain \
                             .
                     """
                 }
@@ -294,9 +346,10 @@ AI summarization will not be available without this secret.
             steps {
                 script {
                     echo 'Pushing image to Artifact Registry...'
+                    // Push latest first to update cache for next build
                     sh """
-                        docker push ${IMAGE_FULL}
                         docker push ${IMAGE_LATEST}
+                        docker push ${IMAGE_FULL}
                     """
                 }
             }
@@ -336,6 +389,7 @@ AI summarization will not be available without this secret.
                         returnStdout: true
                     ).trim()
 
+                    def revisionSuffix = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
                     sh """
                         gcloud run deploy ${cloudRunService} \
                             --image ${IMAGE_FULL} \
@@ -369,16 +423,26 @@ AI summarization will not be available without this secret.
                             --timeout 300 \
                             --concurrency 15 \
                             --allow-unauthenticated \
+                            --revision-suffix ${revisionSuffix} \
+                            --no-traffic \
+                            --quiet
+                    """
+                    sh """
+                        gcloud run services update-traffic ${cloudRunService} \
+                            --to-revisions ${cloudRunService}-${revisionSuffix}=100 \
+                            --region ${GCP_REGION} \
+                            --project ${GCP_PROJECT_ID} \
                             --quiet
                     """
 
                     def serviceUrl = sh(
-                        script: "gcloud run services describe ${cloudRunService} --region=${GCP_REGION} --format='value(status.url)'",
+                        script: "gcloud run services describe ${cloudRunService} --region=${GCP_REGION} --project=${GCP_PROJECT_ID} --format='value(status.url)'",
                         returnStdout: true
                     ).trim()
 
                     echo "=========================================="
                     echo "Service deployed successfully!"
+                    echo "Revision: ${revisionSuffix}"
                     echo "Service URL: ${serviceUrl}"
                     echo "=========================================="
                 }
