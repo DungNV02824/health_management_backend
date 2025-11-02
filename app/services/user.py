@@ -5,6 +5,7 @@ User business logic and services.
 import asyncpg
 from typing import Optional, List
 from datetime import timedelta
+from app.constants import UserProviders
 from app.db.user import UserRepository
 from app.schemas.user import (
     UserCreate,
@@ -29,7 +30,6 @@ from app.helpers import (
 )
 from app.config import settings
 from app.services.email import email_service
-from app.services.oauth import google_oauth_service
 
 
 class UserService:
@@ -59,18 +59,18 @@ class UserService:
         password_hash = None
         if user_data.password:
             password_hash = hash_password(user_data.password)
-        elif user_data.provider == "local":
-            raise ValueError("Password is required for local accounts")
+        elif user_data.provider == UserProviders.PORTAL:
+            raise ValueError("Password is required for portal accounts")
 
         # Create user
         user_record = await self.user_repo.create_user(user_data, password_hash)
         if not user_record:
             raise RuntimeError("Failed to create user")
 
-        # Send email verification for local accounts (OAuth users are pre-verified)
+        # Send email verification for portal accounts (OAuth users are pre-verified)
         if (
             send_verification
-            and user_data.provider == "local"
+            and user_data.provider == UserProviders.PORTAL
             and not user_data.email_verified
         ):
             await self._send_email_verification(
