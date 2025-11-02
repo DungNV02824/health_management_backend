@@ -3,7 +3,7 @@ Configuration settings for the Health Management application.
 """
 
 from typing import Optional
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -56,18 +56,32 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     allowed_hosts: list[str] = ["*"]
 
+    custom_domain: Optional[str] = Field(None, description="Custom domain")
+
     # CORS settings
-    cors_origins: list[str] = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:8080",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "http://127.0.0.1:8080",
-        "http://192.168.1.3:3000",
-        "http://192.168.1.3:3001",
-        "http://192.168.1.3:8080",
-    ]
+    cors_origins: list[str] = Field(
+        default_factory=lambda: [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:8080",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:3001",
+            "http://127.0.0.1:8080",
+            "http://192.168.1.3:3000",
+            "http://192.168.1.3:3001",
+            "http://192.168.1.3:8080",
+        ]
+    )
+
+    @model_validator(mode="after")
+    def add_custom_domain_to_cors(self):
+        """Add custom domain to CORS origins if provided."""
+        if self.custom_domain:
+            origin = f"https://{self.custom_domain}"
+            if origin not in self.cors_origins:
+                self.cors_origins.append(origin)
+        return self
+
     cors_allow_credentials: bool = True
     cors_allow_methods: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
     cors_allow_headers: list[str] = [
