@@ -5,9 +5,10 @@ User API endpoints.
 import asyncpg
 from typing import List, Annotated
 from app.services.user import UserService
+from app.services.auth_log import AuthLogService
 from app.db.database import get_database_pool
 from app.auth.dependencies import get_current_active_user, get_current_active_superuser
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from app.schemas.user import (
     UserCreate,
     UserUpdate,
@@ -25,6 +26,13 @@ async def get_user_service(
 ) -> UserService:
     """Dependency to get user service."""
     return UserService(db_pool)
+
+
+async def get_auth_log_service(
+    db_pool: asyncpg.Pool = Depends(get_database_pool),
+) -> AuthLogService:
+    """Dependency to get auth log service."""
+    return AuthLogService(db_pool)
 
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -128,19 +136,38 @@ async def delete_user(
 
 @router.post("/login", response_model=Token)
 async def login(
-    login_data: UserLogin, user_service: UserService = Depends(get_user_service)
+    login_data: UserLogin,
+    request: Request,
+    user_service: UserService = Depends(get_user_service),
+    auth_log_service: AuthLogService = Depends(get_auth_log_service),
 ):
     """User login."""
     try:
         token = await user_service.login_user(login_data)
+
+        # Extract user_id from token to log success
+        from app.helpers import verify_access_token
+
+        payload = verify_access_token(token.access_token)
+        if payload and payload.get("user_id"):
+            await auth_log_service.log_login_success(
+                request, payload["user_id"], provider="portal"
+            )
+
         return token
     except ValueError as e:
+        await auth_log_service.log_login_failed(
+            request, email=login_data.email, reason=str(e)
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
     except Exception as e:
+        await auth_log_service.log_login_failed(
+            request, email=login_data.email, reason=str(e)
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to login"
         )
