@@ -50,7 +50,7 @@ app_name    = "Health Management API - Development"
 app_version = "1.0.0-dev"
 mail_server = "smtp.gmail.com"
 mail_port   = "587"
-mail_from   = "noreply-dev@healthmanagement.com"
+mail_from   = "noreply-dev@vhealth.io.vn"
 webui_url   = "http://localhost:3000"
 
 # Domain Configuration (Optional - set enable_custom_domain = true to activate)
