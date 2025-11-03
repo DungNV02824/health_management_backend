@@ -14,6 +14,7 @@ from app.api.user import router as user_router
 from app.config import settings
 from app.db.database import database
 from app.services.qa_service import QAService
+from app.api import predict
 
 # Configure logging
 logging.basicConfig(
@@ -79,7 +80,7 @@ app.include_router(
     auth_router, prefix=f"{settings.api_v1_prefix}/auth", tags=["authentication"]
 )
 app.include_router(qa_router, prefix=f"{settings.api_v1_prefix}/qa", tags=["Q&A"])
-
+app.include_router(predict.router)
 
 @app.get("/")
 async def root():
