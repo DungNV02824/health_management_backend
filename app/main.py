@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.auth import router as auth_router
 from app.api.qa import router as qa_router
 from app.api.user import router as user_router
+from app.api.upload import router as upload_router
 from app.config import settings
 from app.db.database import database
 from app.services.qa_service import QAService

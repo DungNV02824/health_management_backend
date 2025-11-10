@@ -48,61 +48,262 @@ health_management/
 
 ### Prerequisites
 
-- Python 3.11+
-- PostgreSQL 15+
-- Docker (optional, for containerized development)
+**All Platforms:**
+
+- Python 3.13
+- PostgreSQL 15+ (or access to a PostgreSQL database)
+- Docker & Docker Compose (optional, for containerized development)
+
+**Platform-Specific:**
+
+- **Linux**: Most distributions have Python and PostgreSQL in repositories. For Python 3.13, you may need to use deadsnakes PPA (Ubuntu) or compile from source
+- **macOS**: Install via Homebrew (`brew install python@3.13 postgresql@15`)
+- **Windows**: Install Python 3.13 from [python.org](https://www.python.org/downloads/) and PostgreSQL from [postgresql.org](https://www.postgresql.org/download/windows/)
 
 ### Local Development
 
-1. **Clone and setup environment:**
-   ```bash
-   git clone <repository-url>
-   cd health_management
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
+#### Step 1: Clone and Setup Environment
 
-2. **Configure environment:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your database credentials and settings
-   ```
+**Linux & macOS:**
 
-3. **Setup database:**
-   ```bash
-   # Create PostgreSQL database
-   createdb health_management
+```bash
+git clone <repository-url>
+cd health_management
+python3.13 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
-   # Run initial schema
-   psql health_management < scripts/init_db.sql
-   ```
+**Windows (PowerShell):**
 
-4. **Run the application:**
-   ```bash
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-   ```
+```powershell
+git clone <repository-url>
+cd health_management
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+**Windows (Command Prompt):**
+
+```cmd
+git clone <repository-url>
+cd health_management
+python -m venv venv
+venv\Scripts\activate.bat
+pip install -r requirements.txt
+```
+
+**Note:** Make sure Python 3.13 is installed and accessible. On Linux/macOS, you may need to use `python3.13` explicitly if multiple Python versions are installed.
+
+#### Step 2: Configure Environment Variables
+
+**All Platforms:**
+
+```bash
+# Linux & macOS
+cp .env.example .env
+
+# Windows (PowerShell)
+Copy-Item .env.example .env
+
+# Windows (Command Prompt)
+copy .env.example .env
+```
+
+Edit `.env` file with your database credentials:
+
+**Linux & macOS:**
+
+```bash
+# If PostgreSQL is running locally
+DATABASE_URL=postgresql://username:password@localhost:5432/health_management
+
+# Example with common defaults
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/health_management
+```
+
+**Windows:**
+
+```env
+# If PostgreSQL is running locally
+DATABASE_URL=postgresql://username:password@localhost:5432/health_management
+
+# Example with common defaults
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/health_management
+```
+
+#### Step 3: Setup Database
+
+**Linux & macOS:**
+
+```bash
+# Create PostgreSQL database
+createdb health_management
+
+# Or using psql
+psql -U postgres
+CREATE DATABASE health_management;
+\q
+
+# Run migrations
+cd scripts
+alembic upgrade head
+```
+
+**Windows:**
+
+```powershell
+# Using psql (add PostgreSQL bin to PATH first)
+psql -U postgres
+CREATE DATABASE health_management;
+\q
+
+# Or use pgAdmin GUI to create database
+
+# Run migrations
+cd scripts
+alembic upgrade head
+```
+
+#### Step 4: Run the Application
+
+**Linux & macOS:**
+
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
+```
+
+**Windows (PowerShell/Command Prompt):**
+
+```powershell
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
+```
+
+The API will be available at:
+
+- **API**: http://localhost:8080
+- **API Docs**: http://localhost:8080/docs
+- **ReDoc**: http://localhost:8080/redoc
 
 ### Docker Development
 
-1. **Start services:**
+#### Prerequisites for Docker
+
+**Linux:**
+
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install docker.io docker-compose
+
+# Start Docker service
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+
+**macOS:**
+
+- Install [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop)
+- Or via Homebrew: `brew install --cask docker`
+
+**Windows:**
+
+- Install [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop)
+- Requires WSL 2 (Windows Subsystem for Linux 2)
+
+#### Running with Docker
+
+**All Platforms:**
+
+1. **Create `.env` file** (if not already created):
+
    ```bash
+   # Linux & macOS
+   cp .env.example .env
+
+   # Windows (PowerShell)
+   Copy-Item .env.example .env
+   ```
+
+2. **Update `.env` with database connection:**
+
+   **For Linux & macOS (connecting to host PostgreSQL):**
+
+   ```env
+   DATABASE_URL=postgresql://username:password@host.docker.internal:5432/health_management
+   ```
+
+   **For Windows (connecting to host PostgreSQL):**
+
+   ```env
+   DATABASE_URL=postgresql://username:password@host.docker.internal:5432/health_management
+   ```
+
+   **Note:** `host.docker.internal` allows Docker containers to access services on the host machine.
+
+3. **Start the application:**
+
+   **Development mode (with hot reload):**
+
+   ```bash
+   # Linux & macOS
+   docker-compose -f docker-compose.dev.yml up
+
+   # Windows (PowerShell)
+   docker-compose -f docker-compose.dev.yml up
+   ```
+
+   **Production mode:**
+
+   ```bash
+   # All platforms
    docker-compose up -d
    ```
 
-2. **View logs:**
+4. **View logs:**
+
    ```bash
+   # Development mode
+   docker-compose -f docker-compose.dev.yml logs -f app
+
+   # Production mode
    docker-compose logs -f api
    ```
 
-3. **Access services:**
-   - API: http://localhost:8000
-   - API Docs: http://localhost:8000/docs
-   - PgAdmin: http://localhost:5050 (optional, use `--profile dev`)
+5. **Stop the application:**
+
+   ```bash
+   # Development mode
+   docker-compose -f docker-compose.dev.yml down
+
+   # Production mode
+   docker-compose down
+   ```
+
+6. **Access services:**
+   - **API**: http://localhost:8080
+   - **API Docs**: http://localhost:8080/docs
+   - **ReDoc**: http://localhost:8080/redoc
+   - **Redis** (dev mode): localhost:6379
+
+#### Troubleshooting Docker
+
+**Connection to host PostgreSQL from Docker:**
+
+- **Linux**: Use `host.docker.internal` or your actual host IP
+- **macOS**: Use `host.docker.internal` (built-in)
+- **Windows**: Use `host.docker.internal` (built-in)
+
+If `host.docker.internal` doesn't work:
+
+- **Linux**: Add `--add-host=host.docker.internal:host-gateway` to docker-compose or use your machine's IP
+- Check PostgreSQL `pg_hba.conf` allows connections from Docker network
 
 ## 🧪 Testing
 
 Run the test suite:
+
 ```bash
 # Run all tests
 pytest
@@ -117,8 +318,9 @@ pytest tests/test_user.py -v
 ## 📚 API Documentation
 
 When running in development mode, interactive API documentation is available at:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+
+- **Swagger UI**: http://localhost:8080/docs
+- **ReDoc**: http://localhost:8080/redoc
 
 ### Key Endpoints
 
@@ -188,6 +390,7 @@ Configuration is managed through environment variables. Key settings:
 ### Production Checklist
 
 1. **Environment Variables:**
+
    ```bash
    DEBUG=false
    SECRET_KEY=<strong-random-key>
@@ -196,6 +399,7 @@ Configuration is managed through environment variables. Key settings:
    ```
 
 2. **Database:**
+
    - Run migrations: `alembic upgrade head`
    - Set up database backups
    - Configure connection pooling
@@ -208,6 +412,8 @@ Configuration is managed through environment variables. Key settings:
 
 ### Docker Production
 
+**All Platforms:**
+
 ```bash
 # Build production image
 docker build -t health-management-api .
@@ -215,10 +421,12 @@ docker build -t health-management-api .
 # Run container
 docker run -d \
   --name health-api \
-  -p 8000:8000 \
+  -p 8080:8080 \
   --env-file .env.production \
   health-management-api
 ```
+
+**Note:** Make sure your `.env.production` file contains production database credentials and settings.
 
 ## 🤝 Development
 
@@ -248,6 +456,7 @@ The application follows a clean architecture pattern:
 4. **Schema Layer** (`app/schemas/`) - Data validation and serialization
 
 This separation ensures:
+
 - **Testability** - Each layer can be tested independently
 - **Maintainability** - Clear boundaries between concerns
 - **Scalability** - Easy to modify or extend individual layers
