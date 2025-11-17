@@ -1,5 +1,5 @@
 ARG BASE_IMAGE
-FROM ${BASE_IMAGE} AS production
+FROM ${BASE_IMAGE:-python:3.13-slim} AS production
 COPY --chown=appuser:appuser app/ ./app/
 COPY --chown=appuser:appuser scripts/migrations/ ./migrations/
 
