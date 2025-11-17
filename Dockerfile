@@ -1,8 +1,9 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE:-python:3.13-slim} AS production
 
-# Create appuser
-RUN groupadd appuser && useradd -g appuser appuser
+# Create appuser if it doesn't exist (base image may already have it)
+RUN getent group appuser >/dev/null 2>&1 || groupadd appuser && \
+    getent passwd appuser >/dev/null 2>&1 || useradd -g appuser -m appuser
 
 # Install Python dependencies
 COPY requirements.txt .
