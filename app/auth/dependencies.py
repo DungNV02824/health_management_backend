@@ -3,7 +3,8 @@ Authentication dependencies for protected routes.
 """
 
 import asyncpg
-from typing import Optional, Annotated
+from typing import Optional
+from typing_extensions import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.config import settings
