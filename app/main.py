@@ -48,11 +48,36 @@ async def lifespan(app: FastAPI):
     if settings.qa_enabled:
         try:
             logger.info("Initializing Q&A Service...")
-            qa_service = QAService(settings)
-            app.state.qa_service = qa_service
-            logger.info("Q&A Service initialized successfully")
+            # Initialize QA Service in background to avoid blocking startup
+            import asyncio
+            from concurrent.futures import ThreadPoolExecutor
+
+            def init_qa_service():
+                try:
+                    return QAService(settings)
+                except Exception as e:
+                    logger.error(f"Failed to initialize Q&A Service: {e}")
+                    return None
+
+            # Initialize QA Service with timeout to prevent Cloud Run startup timeout
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(init_qa_service)
+                try:
+                    # Wait up to 30 seconds for QA Service initialization
+                    qa_service = future.result(timeout=30)
+                    if qa_service:
+                        app.state.qa_service = qa_service
+                        logger.info("Q&A Service initialized successfully")
+                    else:
+                        logger.warning("Q&A Service initialization returned None")
+                        app.state.qa_service = None
+                except Exception as e:
+                    logger.error(f"Q&A Service initialization timed out or failed: {e}")
+                    logger.warning("Q&A Service will not be available - continuing startup")
+                    app.state.qa_service = None
+
         except Exception as e:
-            logger.error(f"Failed to initialize Q&A Service: {e}")
+            logger.error(f"Failed to start Q&A Service initialization: {e}")
             logger.warning("Q&A Service will not be available")
             app.state.qa_service = None
     else:

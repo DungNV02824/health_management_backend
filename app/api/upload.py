@@ -3,7 +3,8 @@ File upload API endpoints.
 """
 
 import logging
-from typing import Annotated, Optional
+from typing import Optional
+from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from app.auth.dependencies import get_current_active_user
 from app.schemas.user import UserInDB

@@ -3,7 +3,7 @@ Conversation-related Pydantic schemas.
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.schemas.base import BaseSchema, TimestampMixin, IDMixin
@@ -63,7 +63,7 @@ class ConversationWithMessages(ConversationResponse):
 class ConversationList(BaseSchema):
     """Schema for conversation list response."""
 
-    conversations: list[ConversationResponse] = Field(
+    conversations: List[ConversationResponse] = Field(
         ..., description="List of conversations"
     )
     total_count: int = Field(..., description="Total number of conversations")

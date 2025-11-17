@@ -1,7 +1,24 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE:-python:3.13-slim} AS production
+
+# Create appuser
+RUN groupadd appuser && useradd -g appuser appuser
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Set working directory first
+WORKDIR /app
+
+# Copy application code with correct structure
 COPY --chown=appuser:appuser app/ ./app/
 COPY --chown=appuser:appuser scripts/migrations/ ./migrations/
+
+# Add app directory to Python path
+ENV PYTHONPATH=/app
+
+USER appuser
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8080/health')" || exit 1

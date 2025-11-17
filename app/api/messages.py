@@ -3,7 +3,8 @@ Message API endpoints.
 """
 
 import asyncpg
-from typing import List, Annotated
+from typing import List
+from typing_extensions import Annotated
 from app.config import logger
 from app.services.message import MessageService
 from app.services.ai_chat import AIChatService

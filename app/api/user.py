@@ -3,7 +3,8 @@ User API endpoints.
 """
 
 import asyncpg
-from typing import List, Annotated
+from typing import List
+from typing_extensions import Annotated
 from app.services.user import UserService
 from app.services.auth_log import AuthLogService
 from app.db.database import get_database_pool

@@ -2,7 +2,7 @@
 Configuration settings for the Health Management application.
 """
 
-from typing import Optional
+from typing import Optional, List
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 import logging
@@ -57,12 +57,12 @@ class Settings(BaseSettings):
 
     # API settings
     api_v1_prefix: str = "/api/v1"
-    allowed_hosts: list[str] = ["*"]
+    allowed_hosts: List[str] = ["*"]
 
     custom_domain: Optional[str] = Field(None, description="Custom domain")
 
     # CORS settings
-    cors_origins: list[str] = Field(
+    cors_origins: List[str] = Field(
         default_factory=lambda: [
             "http://localhost:3000",
             "http://localhost:3001",
@@ -86,8 +86,8 @@ class Settings(BaseSettings):
         return self
 
     cors_allow_credentials: bool = True
-    cors_allow_methods: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
-    cors_allow_headers: list[str] = [
+    cors_allow_methods: List[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+    cors_allow_headers: List[str] = [
         "Accept",
         "Accept-Language",
         "Content-Language",
